@@ -1,0 +1,71 @@
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <button @click="changeData">New Data</button>
+    </div>
+</body>
+
+<script>
+    let vm = new Vue({
+        el: "#app",
+        data: {
+            sampleData: [10, 20, 30]
+        },
+        created() {
+            d3.select("#app")
+                .append("svg")
+                .attr("width", 500)
+                .attr("height", 500);
+        },
+        mounted() {
+            this.draw(); // 等到 Vue.js 一載入完成就執行這個繪圖函式
+        },
+        methods: {
+            changeData() {
+                this.sampleData = [5, 30]; // 模擬新資料的載入
+            },
+            draw(newData) { // 加入剛剛辛苦改好的重繪函式
+                let dataset = newData || this.sampleData; // 若沒有傳入資料，則會使用 Vue.js 實體中的 sampleData
+                let circle = d3.select("svg").selectAll("circle");
+
+                let update = circle.data(dataset); // 更改一下綁定資料
+                let enter = update.enter();
+                let exit = update.exit();
+
+                update
+                    .attr("cx", function (d, i) {
+                        return (i + 1) * 100;
+                    })
+                    .attr("cy", 100)
+                    .attr("r", function (d) {
+                        return d;
+                    })
+                    .style("fill", "red");
+
+                enter
+                    .append("circle")
+                    .attr("cx", function (d, i) {
+                        return (i + 1) * 100;
+                    })
+                    .attr("cy", 100)
+                    .attr("r", function (d) {
+                        return d;
+                    })
+                    .style("fill", "red");
+
+                exit.remove();
+            }
+        },
+        watch: {
+            sampleData: function () {
+                this.draw(this.sampleData);
+            }
+        }
+    });
+</script>

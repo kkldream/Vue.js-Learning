@@ -1,0 +1,60 @@
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+    </style>
+</head>
+
+<body>
+    <div id="app">
+    </div>
+</body>
+
+<script>
+    let vm = new Vue({
+        el: "#app",
+        data: {
+            sampleData: [10, 40, 30, 20, 50]              // 設定基礎的資料集
+        },
+        created() {
+            d3.select("#app")                             // SVG 畫布基礎設定
+                .append("svg")
+                .attr("width", 200)
+                .attr("height", 200)
+                .style("border", "1px solid #00000060");
+        },
+        mounted() {
+            this.draw();
+        },
+        methods: {
+            draw(newData) {
+                let dataset = newData || this.sampleData;    // 設定綁定資料等相關設定
+                let rect = d3.select("svg").selectAll("rect");
+                let update = rect.data(dataset);
+                let enter = update.enter();
+                let exit = update.exit();
+
+                let linear = d3                              // 這裡建立一個線性比例尺
+                    .scaleLinear()
+                    .domain([0, d3.max(dataset)])              // 設定比例範圍 0 與 50 (資料集最大值)
+                    .range([0, 200]);                          // 設定取值範圍 0 至 200（SVG 畫布高）
+
+                enter
+                    .append("rect")
+                    .attr("width", 30)
+                    .attr("height", function (d) {              // 繪製矩形高時，採用資料輸入進去比例尺
+                        return linear(d);                        // 例如第一筆資料為 10 ，比例尺取值後會得到 20
+                    })
+                    .attr("x", function (d, i) {
+                        return i * 40 + 5;
+                    })
+                    .attr("y", function (d) {                   // 矩形的屬性 y 是從上往下算
+                        return 200 - linear(d);                  // 因此要倒過來繪製需用最大高度去減資料高度
+                    })                                         // 所以在這邊矩形的高度也需換算成比例尺取值的高
+                    .attr("fill", "blue");
+
+                exit.remove();
+            }
+        }
+    });
+</script>

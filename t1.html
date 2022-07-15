@@ -1,0 +1,36 @@
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <style>
+        .box {
+            width: 100px;
+            height: 100px;
+            background-color: lightblue;
+        }
+
+        .rotate {
+            transform: rotate(45deg);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app" @keyup.enter="sumbitValid">
+        <input type="text" id="fname">
+    </div>
+    <script>
+        let vm = new Vue({
+            el: '#app',
+            data: {
+                isRotate: false,
+            },
+            methods: {
+                sumbitValid: function () {
+                    var x = document.getElementById("fname");
+                    x.value = x.value.toUpperCase();
+                }
+            }
+
+        })
+
+    </script>
+</body>

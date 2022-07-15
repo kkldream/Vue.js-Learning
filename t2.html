@@ -1,0 +1,62 @@
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <style>
+        .box {
+            width: 100px;
+            height: 100px;
+            background-color: lightblue;
+        }
+
+        .rotate {
+            transform: rotate(45deg);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        目前擁有台幣：{{ money }}元。
+        轉換為日幣後：{{ JPY }}日圓。
+        <br>
+        <button @click="handleOnClick(money)" type="button">{{text}}</button>
+        <br>
+        <p>
+            今晚晚餐吃這個：
+            <input v-model="question">
+        </p>
+        <p>{{ answer }}</p>
+    </div>
+    <script>
+        let vm = new Vue({
+            el: '#app',
+            data: {
+                money: 1000,
+                text: 'Hello Vue!',
+                question: '',
+                answer: '讓我來幫你決定要吃什麼吧！',
+            },
+            watch: {
+                question: function () {
+                    this.getAnswer()
+                }
+            },
+            computed: {
+                JPY: function () {
+                    return this.money / 0.3
+                }
+            },
+            methods: {
+                handleOnClick: function (name) {
+                    return this.text = `Hello ${name}!`
+                },
+                getAnswer: function () {
+                    fetch('https://yesno.wtf/api')
+                        .then(res => res.json())
+                        .then(res => {
+                            this.answer = res.answer
+                        })
+                }
+            }
+        })
+    </script>
+</body>

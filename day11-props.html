@@ -1,0 +1,52 @@
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <style>
+        .myComponent {
+            border: 2px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <p>父元件：<br>
+            {{ parentmsg }}<br>
+            <input type="text" v-model="parentmsg">
+        </p>
+        <p>子元件：<br>
+            <child-component :childmsg="parentmsg"></child-component>
+        </p>
+    </div>
+</body>
+
+<script>
+    // Vue.component("child-component", {
+    //     template:
+    //         '<div>{{ childmsg }} <br><input type="text" v-model="childmsg"></div>',
+    //     props: {
+    //         childmsg: String
+    //     }
+    // });
+    let vm = new Vue({
+        el: "#app",
+        data: {
+            parentmsg: "父元件資料"
+        },
+        components: {
+            "child-component": {
+                template:
+                    '<div>{{ childmsg }} <br><input type="text" v-model="childmsg"></div>',
+                props: {
+                    childmsg: String
+                }
+            },
+            // "child-component": Vue.extend({
+            //     template:
+            //         '<div>{{ childmsg }} <br><input type="text" v-model="childmsg"></div>',
+            //     props: {
+            //         childmsg: String
+            //     }
+            // })
+        }
+    });
+</script>

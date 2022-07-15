@@ -1,0 +1,40 @@
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <style>
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        {{ message }}
+        <child-element>
+            <template v-slot:first>First</template>
+            <template v-slot:second>Second</template>
+            <template v-slot:third>Third</template>
+        </child-element>
+    </div>
+</body>
+
+<script>
+    Vue.component('child-element', {
+        template:
+            `
+        <div>
+            <slot name="first">aaa</slot>
+            <slot name="second">bbb</slot>
+            <slot name="third">ccc</slot>
+        </div>
+        `,
+        data() {
+            return {
+                childMessage: 'child component'
+            }
+        }
+    })
+    let vm = new Vue({
+        el: '#app',
+        data: {
+            message: 'parent component'
+        }
+    })
+</script>

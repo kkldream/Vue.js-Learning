@@ -1,0 +1,50 @@
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <style>
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <button type="button" @click="pagename = 'mainpage'">switch to Main page</button>
+        <button type="button" @click="pagename = 'aboutpage'">switch to About page</button>
+        <button type="button" @click="pagename = 'contactpage'">switch to Contact page</button>
+        <component :is="pagename"></component>
+    </div>
+</body>
+
+<script>
+    Vue.component('mainpage', {
+        template: `<div>This page is mainpage</div>`,
+        created() {
+            console.log('created mainpage')
+        },
+        destroyed() {
+            console.log('destroyed mainpage')
+        },
+    })
+    Vue.component('aboutpage', {
+        template: `<div>This page is aboutpage</div>`,
+        created() {
+            console.log('created aboutpage')
+        },
+        destroyed() {
+            console.log('destroyed aboutpage')
+        },
+    })
+    Vue.component('contactpage', {
+        template: `<div>This page is contactpage</div>`,
+        created() {
+            console.log('created contactpage')
+        },
+        destroyed() {
+            console.log('destroyed contactpage')
+        },
+    })
+    let vm = new Vue({
+        el: '#app',
+        data: {
+            pagename: 'mainpage'
+        }
+    })
+</script>
