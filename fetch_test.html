@@ -26,27 +26,25 @@
             text: "Hello",
         },
         methods: {
-            GetBikeStation: function() {
-                const api = 'https://localhost:44330/api/bike/station';
-                let headers = {
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                }
-                let body = {
-                    "lng": 121.123123,
-                    "lat": 25.123123,
-                    "range": 1000000000
-                }
-                fetch(api, { method: "POST", headers: headers, body: JSON.stringify(body) })
-                    .then(res => res.json())
-                    .then(res => {
-                        this.text = res;
-                        console.log(res);
-                    });
-            }
+
         },
         mounted() {
-            GetBikeStation();
+            const api = 'https://localhost:44330/api/bike/station';
+            let headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            }
+            let body = {
+                "lng": 121.123123,
+                "lat": 25.123123,
+                "range": 1000000000
+            }
+            fetch(api, { method: "POST", headers: headers, body: JSON.stringify(body) })
+                .then(res => res.json())
+                .then(res => {
+                    this.text = res;
+                    console.log(res);
+                });
         },
 
 
