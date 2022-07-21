@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <button @click="getLocation()">定位</button>
-    <button @click="updateBikeStationMap()">PTX</button>
+    <button @click="getLocation()">getLocation</button>
+    <button @click="updateBikeStationMap()">updateBikeStationMap</button>
     <br>
     <div id="map"></div>
   </div>
@@ -9,6 +9,7 @@
 
 <script>
 import L from 'leaflet';
+import img from './assets/here.png';
 let openStreetMap = {};
 export default {
   name: 'App',
@@ -25,6 +26,7 @@ export default {
       },
       bikeStation: [],
     },
+    tdxToken: null,
   }),
   components: {
 
@@ -58,7 +60,13 @@ export default {
       if (this.marker.myPos.point) this.marker.myPos.point.remove();
       if (this.marker.myPos.circle) this.marker.myPos.circle.remove();
       // 建立中心標記點
-      this.marker.myPos.point = L.marker(pos).addTo(openStreetMap);
+      var myIcon = L.icon({
+        iconUrl: img,
+        iconSize: [41, 49],
+        iconAnchor: [20, 49],
+        popupAnchor: [0, -50],
+      });
+      this.marker.myPos.point = L.marker(pos, { icon: myIcon }).addTo(openStreetMap);
       this.marker.myPos.point.bindPopup("I am here.");
       // 建立圓形區塊
       this.marker.myPos.circle = L.circle(pos, {
@@ -73,35 +81,96 @@ export default {
 
     // 更新標記腳踏車站標記點
     updateBikeStationMap() {
-      // 取得API資料
-      const apiUrl = 'https://localhost:44330/api/bike/station';
-      let headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
+
+      // 取得TDX金鑰
+      async function getTdxTokenKey() {
+        // 取得API資料
+        const apiUrl = 'https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token';
+        let headers = {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+        }
+        let details = {
+          grant_type: "client_credentials",
+          client_id: "b0742033-ec2e35c5-abbc-4252",
+          client_secret: "6e63241d-a57f-405e-9ce9-ebaab604ea6f",
+        }
+        var formBody = [];
+        for (var property in details) {
+          var encodedKey = encodeURIComponent(property);
+          var encodedValue = encodeURIComponent(details[property]);
+          formBody.push(encodedKey + "=" + encodedValue);
+        }
+        formBody = formBody.join("&");
+        let response = await fetch(apiUrl, { method: "POST", headers: headers, body: formBody });
+        let response_json = await response.json();
+        return response_json;
       }
-      let body = {
-        "lng": this.myPos.lng,
-        "lat": this.myPos.lat,
-        "range": 1000,
+
+      // 取得腳踏車即時資訊
+      async function getAvailableBikeInfo() {
+        let key = await getTdxTokenKey();
+        // 取得API資料
+        const apiUrl = 'https://tdx.transportdata.tw/api/basic/v2/Bike/Availability/City/Taipei?%24format=JSON';
+        let headers = {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "authorization": "Bearer " + key.access_token,
+        }
+        let response = await fetch(apiUrl, { method: "GET", headers: headers });
+        let response_json = response.json();
+        return response_json
       }
-      fetch(apiUrl, { method: "POST", headers: headers, body: JSON.stringify(body) })
-        .then(res => res.json())
+
+      // 更新標記腳踏車站標記點
+      async function getBikeStationMap(data) {
+        // 取得API資料
+        const apiUrl = 'https://localhost:44330/api/bike/station';
+        let headers = {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        }
+        let body = {
+          "lng": data.myPos.lng,
+          "lat": data.myPos.lat,
+          "range": 1000,
+        }
+        let response = await fetch(apiUrl, { method: "POST", headers: headers, body: JSON.stringify(body) });
+        let response_json = await response.json();
+        return response_json;
+      }
+
+      let availableBikeInfo;
+      getAvailableBikeInfo()
+        .then(available => {
+          availableBikeInfo = available;
+          return getBikeStationMap(this);
+        })
+        .then(station => {
+          station.forEach(sta => {
+            const info = availableBikeInfo.find(obj => obj.StationUID == sta.StationUID)
+            sta.AvailableRentBikes = info.AvailableRentBikes;
+            sta.AvailableReturnBikes = info.AvailableReturnBikes;
+            sta.UpdateTime = info.UpdateTime;
+          })
+          console.log(station);
+          return station;
+        })
         // 將資料標記在地圖上
-        .then(res => {
+        .then(station => {
           // 先清除舊標記
           this.marker.bikeStation.forEach(r => r.remove())
           this.marker.bikeStation = [];
           // 添加新標記
-          res.forEach(r => {
-            let marker = L.marker([r.Position[1], r.Position[0]]).addTo(openStreetMap).bindPopup(
-              `<p><strong style="font-size: 20px;">${r.StationUID}</strong></p>
-              <strong style="font-size: 16px; color: #d45345;">Youbkie ${r.ServiceType}.0</strong><br>
-              直線距離: ${parseInt(r.Distance)}<br>
-              剩餘數量: ${r.BikesCapacity}<br>`
+          station.forEach(sta => {
+            let marker = L.marker([sta.StationPosition[1], sta.StationPosition[0]]).addTo(openStreetMap).bindPopup(
+              `<p><strong style="font-size: 20px;">${sta.StationName}</strong></p>
+              <strong style="font-size: 16px; color: #d45345;">${sta.StationAddress}</strong><br>
+              直線距離: ${parseInt(sta.Distance)}公尺<br>
+              可租借數量: ${sta.AvailableRentBikes}  可歸還數量: ${sta.AvailableReturnBikes}<br>`
             );
             this.marker.bikeStation.push(marker);
           });
-        });
+        })
     },
   },
 
@@ -115,6 +184,31 @@ export default {
       maxZoom: 19,
       attribution: '© OpenStreetMap'
     }).addTo(openStreetMap);
+
+    () => { // 取得TDX金鑰
+      const apiUrl = 'https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token';
+      let headers = {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+      }
+      let body = {
+        grant_type: "client_credentials",
+        client_id: "b0742033-ec2e35c5-abbc-4252",
+        client_secret: "6e63241d-a57f-405e-9ce9-ebaab604ea6f",
+      }
+      var formBody = [];
+      for (var property in body) {
+        var encodedKey = encodeURIComponent(property);
+        var encodedValue = encodeURIComponent(body[property]);
+        formBody.push(encodedKey + "=" + encodedValue);
+      }
+      formBody = formBody.join("&");
+      fetch(apiUrl, { method: "POST", headers: headers, body: formBody })
+        .then(res => res.json())
+        .then(res => {
+          console.log(res);
+          this.tdxToken = res.access_token;
+        });
+    }
   },
 };
 </script>
