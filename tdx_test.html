@@ -1,0 +1,64 @@
+<body>
+    <h3>取得憑證資料:</h3>
+    <div id="accesstoken" class="align-text-bottom">
+    </div>
+
+    <h3>api 資料:</h3>
+    <div id="apireponse" class="align-text-bottom">
+    </div>
+</body>
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script>
+    ~(() => {
+        getTdxTokenKey()
+            .then(key => {
+                const token = key.access_token;
+                $("#accesstoken").text(token);
+                return token;
+            })
+            .then(token => {
+                return GetAvailableBikeInfo(token);
+            })
+            .then(res => {
+                $("#apireponse").text(res);
+            })
+    })();
+
+    async function getTdxTokenKey() {
+        // 取得API資料
+        const apiUrl = 'https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token';
+        let headers = {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+        }
+        let details = {
+            grant_type: "client_credentials",
+            client_id: "b0742033-ec2e35c5-abbc-4252",
+            client_secret: "6e63241d-a57f-405e-9ce9-ebaab604ea6f",
+        }
+        var formBody = [];
+        for (var property in details) {
+            var encodedKey = encodeURIComponent(property);
+            var encodedValue = encodeURIComponent(details[property]);
+            formBody.push(encodedKey + "=" + encodedValue);
+        }
+        formBody = formBody.join("&");
+        let response = await fetch(apiUrl, { method: "POST", headers: headers, body: formBody });
+        let response_json = await response.json();
+        return response_json;
+    }
+
+    async function GetAvailableBikeInfo(token) {
+        // 取得API資料
+        const apiUrl = 'https://tdx.transportdata.tw/api/basic/v2/Bike/Availability/City/Taipei?%24format=JSON';
+        let headers = {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "authorization": "Bearer " + token,
+        }
+        let response = await fetch(apiUrl, { method: "GET", headers: headers });
+        let response_json = await response.text();
+        return response_json;
+    }
+
+</script>
